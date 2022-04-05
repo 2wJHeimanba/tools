@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="app" class="app-container">
+        <div class="container" style="text-align: center;font-size: 29px;">
+            <span>
+                hello world
+            </span>
+        </div>
+        <span style="font-weight: bold;font-size: 30px;">{{name}}</span>
+        <span>{{age}}</span>
+    </div>
+
+    <script>
+        const unicodeRegExp = /a-zA-Z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD/
+        const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+        const dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+?\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+        const ncname = `[a-zA-Z_][\\-\\.0-9_a-zA-Z${unicodeRegExp.source}]*`
+        const qnameCapture = `((?:${ncname}\\:)?${ncname})`
+        const startTagOpen = new RegExp(`^<${qnameCapture}`)
+        const startTagClose = /^\s*(\/?)>/
+        const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`)
+        const doctype = /^<!DOCTYPE [^>]+>/i
+        const comment = /^<!\--/
+        const conditionalComment = /^<!\[/
+
+        // const startReg = /^<\w+?[\s*>]/;//匹配开始标签
+        // const attrReg = /^\w+?=["'].+?["']\s*/;//匹配属性
+        // const endReg = /^\s*>\s*/;//匹配结束标签
+        // const contentReg = /.*(?=\s?<)/;//匹配内容
+        // const tagEndReg = /^(<\/)\w+?>\s*/;//匹配标签结束
+        class ParseDom{
+            constructor({el}=params){
+                this.el = el&&document.querySelector(el);
+                this.html = this.el.outerHTML;
+                this.parser=[];//解析后的dom
+                this.init();
+            }
+
+            init(){
+                let text;
+                while(this.html){
+                    
+                    let textEnd = this.html.indexOf("<");
+                    if(textEnd===0){
+                        const startTagMatch = this.parseStartTag();
+                        if(startTagMatch){
+                            this.start(startTagMatch.tagName,startTagMatch.attrs);
+                            continue;
+                        }
+                        const endTagMatch = this.html.match(endTag);
+                        if(endTagMatch){
+                            this.shear(endTagMatch[0].length);
+                            this.end(endTagMatch[1]);
+                            continue;
+                        }
+                    }
+
+                    if(textEnd > 0){
+                        text = this.html.substring(0,textEnd)
+                    }
+
+                    if(text){
+                        this.shear(text.length);
+                        this.chars(text)
+                    }
+                }               
+            }
+
+            parseStartTag(){
+                const start = this.html.match(startTagOpen);
+                let end,
+                    attr;
+                if(start){
+                    const match = {
+                        tagName:start[1],
+                        attrs:[]
+                    }
+                    this.shear(start[0].length);
+                    while(!(end=this.html.match(startTagClose)) && (attr = this.html.match(attribute))){
+                        match.attrs.push({
+                            name:attr[1],
+                            value:attr[3]||attr[4]||attr[5]
+                        });
+                        this.shear(attr[0].length);
+                    }
+
+                    if(end){
+                        this.shear(end[0].length);
+                        return match
+                    }
+                }
+            }
+
+            //切割字符串
+            shear(len){
+                this.html = this.html.substring(len);
+            }
+
+            start(tagName,attrs){
+                console.log("===开始===")
+                console.log(tagName,attrs)
+            }
+
+            end(item){
+                console.log("===结束===")
+                console.warn(item)
+            }
+
+            chars(item){
+                console.log("===内容===")
+                console.log("chars",item)
+            }
+            // 创建
+            createASTElement(tagName,attrs){
+                return {
+                    tag:tagName,
+                    type:1,
+                    children:[],
+                    attrs,
+                    parent,
+                }
+            }
+        }
+        new ParseDom({
+            el:"#app"
+        })
+    </script>
+</body>
+</html>
