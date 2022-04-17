@@ -29,7 +29,11 @@ export interface VNodeData{
     attachData?:AttachData,
     hook?:Hooks,
     key?:Key,
-
+    ns?:string,
+    fn?:()=>VNode,
+    args?:any[],
+    is?:string,
+    [key:string]:any
 }
 
 export function vnode(

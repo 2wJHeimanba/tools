@@ -1,15 +1,26 @@
-
+import { init } from "./init"; 
 import { h } from "./h";
+import { classModule } from "./modules/class"
 
 let test = h(
-  "div",
+  "h2#container",
   {
-    style:{color:"red"}
+    class:{styleDemo:true}
   }
-  ,h(
-    "span",
-    "wenjianjia"
-  )
+  ,[
+    h(
+      "span",
+      "wenjianjia"
+    ),
+    h(
+      "h3.vans",
+      ["hello golang"]
+    )
+  ]
 );
 
-console.log(test,"result")
+let patch = init([
+  classModule
+]);
+let result = patch(document.querySelector("#app"),test);
+console.warn(result)
