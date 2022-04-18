@@ -60,9 +60,9 @@ function updateStyle(oldVnode: VNode, vnode: VNode): void {
         }
       }
     }
-  }
+}
   
-  function applyDestroyStyle(vnode: VNode): void {
+function applyDestroyStyle(vnode: VNode): void {
     let style: any;
     let name: string;
     const elm = vnode.elm;
@@ -71,9 +71,9 @@ function updateStyle(oldVnode: VNode, vnode: VNode): void {
     for (name in style) {
       (elm as any).style[name] = style[name];
     }
-  }
+}
   
-  function applyRemoveStyle(vnode: VNode, rm: () => void): void {
+function applyRemoveStyle(vnode: VNode, rm: () => void): void {
     const s = (vnode.data as VNodeData).style;
     if (!s || !s.remove) {
       rm();
@@ -99,20 +99,20 @@ function updateStyle(oldVnode: VNode, vnode: VNode): void {
     for (; i < props.length; ++i) {
       if (applied.indexOf(props[i]) !== -1) amount++;
     }
-    (elm as Element).addEventListener(
+    (elm as any).addEventListener(
       "transitionend",
       function (ev: TransitionEvent) {
         if (ev.target === elm) --amount;
         if (amount === 0) rm();
       }
     );
-  }
+}
   
-  function forceReflow() {
+function forceReflow() {
     reflowForced = false;
-  }
+}
   
-  export const styleModule: Module = {
+export const styleModule: Module = {
     pre: forceReflow,
     create: updateStyle,
     update: updateStyle,

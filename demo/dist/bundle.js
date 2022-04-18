@@ -522,14 +522,229 @@ function updateClass(oldVnode, vnode) {
 }
 var classModule = { create: updateClass, update: updateClass };
 
+var raf = (typeof window !== "undefined" && window.requestAnimationFrame.bind(window)) || setTimeout;
+var nextFrame = function (fn) {
+    raf(function () {
+        raf(fn);
+    });
+};
+var reflowForced = false;
+function setNextFrame(obj, prop, val) {
+    nextFrame(function () {
+        obj[prop] = val;
+    });
+}
+function updateStyle(oldVnode, vnode) {
+    var cur;
+    var name;
+    var elm = vnode.elm;
+    var oldStyle = oldVnode.data.style;
+    var style = vnode.data.style;
+    if (!oldStyle && !style)
+        return;
+    if (oldStyle === style)
+        return;
+    oldStyle = oldStyle || {};
+    style = style || {};
+    var oldHasDel = "delayed" in oldStyle;
+    for (name in oldStyle) {
+        if (!style[name]) {
+            if (name[0] === "-" && name[1] === "-") {
+                elm.style.removeProperty(name);
+            }
+            else {
+                elm.style[name] = "";
+            }
+        }
+    }
+    for (name in style) {
+        cur = style[name];
+        if (name === "delayed" && style.delayed) {
+            for (var name2 in style.delayed) {
+                cur = style.delayed[name2];
+                if (!oldHasDel || cur !== oldStyle.delayed[name2]) {
+                    setNextFrame(elm.style, name2, cur);
+                }
+            }
+        }
+        else if (name !== "remove" && cur !== oldStyle[name]) {
+            if (name[0] === "-" && name[1] === "-") {
+                elm.style.setProperty(name, cur);
+            }
+            else {
+                elm.style[name] = cur;
+            }
+        }
+    }
+}
+function applyDestroyStyle(vnode) {
+    var style;
+    var name;
+    var elm = vnode.elm;
+    var s = vnode.data.style;
+    if (!s || !(style = s.destroy))
+        return;
+    for (name in style) {
+        elm.style[name] = style[name];
+    }
+}
+function applyRemoveStyle(vnode, rm) {
+    var s = vnode.data.style;
+    if (!s || !s.remove) {
+        rm();
+        return;
+    }
+    if (!reflowForced) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        vnode.elm.offsetLeft;
+        reflowForced = true;
+    }
+    var name;
+    var elm = vnode.elm;
+    var i = 0;
+    var style = s.remove;
+    var amount = 0;
+    var applied = [];
+    for (name in style) {
+        applied.push(name);
+        elm.style[name] = style[name];
+    }
+    var compStyle = getComputedStyle(elm);
+    var props = compStyle["transition-property"].split(", ");
+    for (; i < props.length; ++i) {
+        if (applied.indexOf(props[i]) !== -1)
+            amount++;
+    }
+    elm.addEventListener("transitionend", function (ev) {
+        if (ev.target === elm)
+            --amount;
+        if (amount === 0)
+            rm();
+    });
+}
+function forceReflow() {
+    reflowForced = false;
+}
+var styleModule = {
+    pre: forceReflow,
+    create: updateStyle,
+    update: updateStyle,
+    destroy: applyDestroyStyle,
+    remove: applyRemoveStyle
+};
+
+function invokeHandler(handler, vnode, event) {
+    if (typeof handler === "function") {
+        handler.call(vnode, event, vnode);
+    }
+    else if (typeof handler === "object") {
+        for (var i = 0; i < handler.length; i++) {
+            invokeHandler(handler[i], vnode, event);
+        }
+    }
+}
+function handleEvent(event, vnode) {
+    var name = event.type;
+    var on = vnode.data.on;
+    if (on && on[name]) {
+        invokeHandler(on[name], vnode, event);
+    }
+}
+function createListener() {
+    return function handler(event) {
+        handleEvent(event, handler.vnode);
+    };
+}
+function updateEventListeners(oldVnode, vnode) {
+    var oldOn = oldVnode.data.on;
+    var oldListener = oldVnode.listener;
+    var oldElm = oldVnode.elm;
+    var on = vnode && vnode.data.on;
+    var elm = (vnode && vnode.elm);
+    var name;
+    // optimization for reused immutable handlers
+    if (oldOn === on) {
+        return;
+    }
+    // remove existing listeners which no longer used
+    if (oldOn && oldListener) {
+        // if element changed or deleted we remove all existing listeners unconditionally
+        if (!on) {
+            for (name in oldOn) {
+                // remove listener if element was changed or existing listeners removed
+                oldElm.removeEventListener(name, oldListener, false);
+            }
+        }
+        else {
+            for (name in oldOn) {
+                // remove listener if existing listener removed
+                if (!on[name]) {
+                    oldElm.removeEventListener(name, oldListener, false);
+                }
+            }
+        }
+    }
+    // add new listeners which has not already attached
+    if (on) {
+        // reuse existing listener or create new
+        var listener = (vnode.listener =
+            oldVnode.listener || createListener());
+        // update vnode for listener
+        listener.vnode = vnode;
+        // if element changed or added we add all needed listeners unconditionally
+        if (!oldOn) {
+            for (name in on) {
+                // add listener if element was changed or new listeners added
+                elm.addEventListener(name, listener, false);
+            }
+        }
+        else {
+            for (name in on) {
+                // add listener if new listener added
+                if (!oldOn[name]) {
+                    elm.addEventListener(name, listener, false);
+                }
+            }
+        }
+    }
+}
+var eventListenersModule = {
+    create: updateEventListeners,
+    update: updateEventListeners,
+    destroy: updateEventListeners
+};
+
 var test = h("h2#container", {
-    "class": { styleDemo: true }
+    "class": { styleDemo: true },
+    style: {
+        color: "cyan"
+    }
 }, [
     h("span", "wenjianjia"),
     h("h3.vans", ["hello golang"])
 ]);
 var patch = init([
-    classModule
+    classModule,
+    styleModule,
+    eventListenersModule
 ]);
 var result = patch(document.querySelector("#app"), test);
-console.warn(result);
+setTimeout(function () {
+    var temporary_vnode = h("h2#container", {
+        "class": { styleDemo: true },
+        style: {
+            color: "red",
+            background: "pink"
+        }
+    }, [
+        h("span", {
+            on: {
+                click: function (name) {
+                    console.log("hello golang", name);
+                }
+            }
+        }, "wenjianjia"),
+        h("h3.vans", ["hello golang"])
+    ]);
+    patch(result, temporary_vnode);
+}, 2000);
