@@ -3,6 +3,8 @@ import { h } from "./h";
 import { classModule } from "./modules/class"
 import { styleModule } from "./modules/style"
 import { eventListenersModule } from "./modules/eventlisteners"
+import { attributesModule } from "./modules/attributes"
+import { propsModule } from "./modules/props"
 
 let test = h(
   "h2#container",
@@ -27,18 +29,35 @@ let test = h(
 let patch = init([
   classModule,
   styleModule,
-  eventListenersModule
+  eventListenersModule,
+  attributesModule,
+  propsModule
 ]);
 let result = patch(document.querySelector("#app"),test);
 setTimeout(()=>{
+  function testHandler(name:string){
+    return h(
+      "h1.test-box",
+      [
+        h(
+          "p",
+          "wenjianjia"
+        ),
+        h(
+          "p",
+          "菜鸟爱抬头"+name
+        )
+      ]
+    )
+  }
   const name = "vans";
   let temporary_vnode = h(
     "h2#container",
     {
       class:{styleDemo:true},
       style:{
-        color:"red",
-        background:"pink"
+        color:"#333",
+        background:"#ccc"
       }
     }
     ,[
@@ -46,12 +65,22 @@ setTimeout(()=>{
         "span",
         {
           on:{
-            click:(name)=>{
-              console.log("hello golang",name)
+            click:(e:any)=>{
+              console.log("hello golang",e.target.person)
+            }
+          },
+          attrs:{
+            jq:"vans-wen"
+          },
+          props:{
+            person:{
+              name:"vans",
+              age:121
             }
           }
         },
-        "wenjianjia"
+        "vans"
+        // testHandler("hello golang")
       ),
       h(
         "h3.vans",

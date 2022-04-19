@@ -714,6 +714,90 @@ var eventListenersModule = {
     destroy: updateEventListeners
 };
 
+var xlinkNS = "http://www.w3.org/1999/xlink";
+var xmlNS = "http://www.w3.org/XML/1998/namespace";
+var colonChar = 58;
+var xChar = 120;
+function updateAttrs(oldVnode, vnode) {
+    var key;
+    var elm = vnode.elm;
+    var oldAttrs = oldVnode.data.attrs;
+    var attrs = vnode.data.attrs;
+    if (!oldAttrs && !attrs)
+        return;
+    if (oldAttrs === attrs)
+        return;
+    oldAttrs = oldAttrs || {};
+    attrs = attrs || {};
+    // update modified attributes, add new attributes
+    for (key in attrs) {
+        var cur = attrs[key];
+        var old = oldAttrs[key];
+        if (old !== cur) {
+            if (cur === true) {
+                elm.setAttribute(key, "");
+            }
+            else if (cur === false) {
+                elm.removeAttribute(key);
+            }
+            else {
+                if (key.charCodeAt(0) !== xChar) {
+                    elm.setAttribute(key, cur);
+                }
+                else if (key.charCodeAt(3) === colonChar) {
+                    // Assume xml namespace
+                    elm.setAttributeNS(xmlNS, key, cur);
+                }
+                else if (key.charCodeAt(5) === colonChar) {
+                    // Assume xlink namespace
+                    elm.setAttributeNS(xlinkNS, key, cur);
+                }
+                else {
+                    elm.setAttribute(key, cur);
+                }
+            }
+        }
+    }
+    // remove removed attributes
+    // use `in` operator since the previous `for` iteration uses it (.i.e. add even attributes with undefined value)
+    // the other option is to remove all attributes with value == undefined
+    for (key in oldAttrs) {
+        if (!(key in attrs)) {
+            elm.removeAttribute(key);
+        }
+    }
+}
+var attributesModule = {
+    create: updateAttrs,
+    update: updateAttrs
+};
+
+function updateProps(oldVnode, vnode) {
+    var key;
+    var cur;
+    var old;
+    var elm = vnode.elm;
+    var oldProps = oldVnode.data.props;
+    var props = vnode.data.props;
+    if (!oldProps && !props)
+        return;
+    if (oldProps === props)
+        return;
+    oldProps = oldProps || {};
+    props = props || {};
+    for (key in props) {
+        cur = props[key];
+        old = oldProps[key];
+        if (old !== cur && (key !== "value" || elm[key] !== cur)) {
+            elm[key] = cur;
+        }
+    }
+}
+var propsModule = {
+    create: updateProps,
+    update: updateProps
+};
+
 var test = h("h2#container", {
     "class": { styleDemo: true },
     style: {
@@ -726,24 +810,37 @@ var test = h("h2#container", {
 var patch = init([
     classModule,
     styleModule,
-    eventListenersModule
+    eventListenersModule,
+    attributesModule,
+    propsModule
 ]);
 var result = patch(document.querySelector("#app"), test);
 setTimeout(function () {
     var temporary_vnode = h("h2#container", {
         "class": { styleDemo: true },
         style: {
-            color: "red",
-            background: "pink"
+            color: "#333",
+            background: "#ccc"
         }
     }, [
         h("span", {
             on: {
-                click: function (name) {
-                    console.log("hello golang", name);
+                click: function (e) {
+                    console.log("hello golang", e.target.person);
+                }
+            },
+            attrs: {
+                jq: "vans-wen"
+            },
+            props: {
+                person: {
+                    name: "vans",
+                    age: 121
                 }
             }
-        }, "wenjianjia"),
+        }, "vans"
+        // testHandler("hello golang")
+        ),
         h("h3.vans", ["hello golang"])
     ]);
     patch(result, temporary_vnode);

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>parser</title>
+    <style>
+        *{
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            background-color: #333;
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+        .container{
+            margin: auto;
+            box-shadow: 0 0 5px rgba(255, 255, 255,0.5),
+                        0 0 5px rgba(255, 255, 255,0.5) inset;
+            width: 270px;
+            height: 170px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+        .container>div:first-child{
+            flex:1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 50px;
+            font-weight: bold;
+            color: rgb(182, 179, 179);
+            text-shadow: 0 0 5px rgba(255, 255, 255,0.3);
+        }
+        .container>div:nth-child(2){
+            display: flex;
+            justify-content: center;
+            padding-bottom: 8px;
+        }
+        a{
+            color: #fff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>404</div>
+        <div>
+            <span>资源不存在-> </span>&nbsp;&nbsp;
+            <a href="#">回首页</a>
+        </div>
+    </div>
+    <script src="./dist/bundle.es.js"></script>
+</body>
+</html>
