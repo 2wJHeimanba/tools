@@ -1,4 +1,5 @@
 
 import { init } from "./init"
 
-init(".container")
+let result = init(".container");
+console.log(result)

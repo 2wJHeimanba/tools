@@ -5,6 +5,7 @@ import {
     attribute,
     endTag
 } from "./parser/domreg"
+import { vnode } from "./vnode";
 
 interface Match{
     tagName:string|undefined,
@@ -16,22 +17,52 @@ export function init(el:string|Element){
         el = document.querySelector(el)
     }
     let html:string = el.outerHTML;
+    let root,
+        currentParent,
+        stack = [];
 
     // 切割字符串
     function shear(len:number){
         html = html.substring(len);
     }
 
+    // 创建
+    function createASTElement(tagName,attrs){
+        return {
+            tag:tagName,
+            type:1,
+            children:[],
+            attrs,
+            parent,
+        }
+    }
+
     function start(tagName,attrs){
-        console.log("start",tagName,attrs)
+        const element = createASTElement(tagName,attrs);
+        
+        if(!root) root = element;
+
+        currentParent = element;
+        stack.push(element)
     }
 
     function end(item){
-        console.log("end",item)
+        const element = stack.pop();
+        currentParent = stack[stack.length - 1];
+        if(currentParent){
+            element.parent = currentParent;
+            currentParent.children.push(element)
+        }
     }
 
-    function chars(item){
-        console.log("chars",item)
+    function chars(text:string){
+        text = text.trim();
+        if(text.length > 0){
+            currentParent.children.push({
+                type:3,
+                text
+            })
+        }
     }
 
     function parseStartTag():Match{
@@ -86,4 +117,5 @@ export function init(el:string|Element){
             chars(text)
         }
     }
+    return root
 }

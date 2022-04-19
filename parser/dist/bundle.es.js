@@ -11,18 +11,44 @@ function init(el) {
         el = document.querySelector(el);
     }
     var html = el.outerHTML;
+    var root, currentParent, stack = [];
     // 切割字符串
     function shear(len) {
         html = html.substring(len);
     }
+    // 创建
+    function createASTElement(tagName, attrs) {
+        return {
+            tag: tagName,
+            type: 1,
+            children: [],
+            attrs: attrs,
+            parent: parent
+        };
+    }
     function start(tagName, attrs) {
-        console.log("start", tagName, attrs);
+        var element = createASTElement(tagName, attrs);
+        if (!root)
+            root = element;
+        currentParent = element;
+        stack.push(element);
     }
     function end(item) {
-        console.log("end", item);
+        var element = stack.pop();
+        currentParent = stack[stack.length - 1];
+        if (currentParent) {
+            element.parent = currentParent;
+            currentParent.children.push(element);
+        }
     }
-    function chars(item) {
-        console.log("chars", item);
+    function chars(text) {
+        text = text.trim();
+        if (text.length > 0) {
+            currentParent.children.push({
+                type: 3,
+                text: text
+            });
+        }
     }
     function parseStartTag() {
         var start = html.match(startTagOpen);
@@ -70,6 +96,8 @@ function init(el) {
             chars(text);
         }
     }
+    return root;
 }
 
-init(".container");
+var result = init(".container");
+console.log(result);
