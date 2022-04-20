@@ -37,15 +37,15 @@ export function init(el:string|Element){
         }
     }
 
-    function start(tagName,attrs){
+    // 开始标签
+    function start(tagName:string,attrs:Record<string,any>){
         const element = createASTElement(tagName,attrs);
-        
         if(!root) root = element;
-
         currentParent = element;
         stack.push(element)
     }
 
+    // 结束标签
     function end(item){
         const element = stack.pop();
         currentParent = stack[stack.length - 1];
@@ -55,6 +55,7 @@ export function init(el:string|Element){
         }
     }
 
+    // 文本内容
     function chars(text:string){
         text = text.trim();
         if(text.length > 0){

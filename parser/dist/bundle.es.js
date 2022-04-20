@@ -26,6 +26,7 @@ function init(el) {
             parent: parent
         };
     }
+    // 开始标签
     function start(tagName, attrs) {
         var element = createASTElement(tagName, attrs);
         if (!root)
@@ -33,6 +34,7 @@ function init(el) {
         currentParent = element;
         stack.push(element);
     }
+    // 结束标签
     function end(item) {
         var element = stack.pop();
         currentParent = stack[stack.length - 1];
@@ -41,6 +43,7 @@ function init(el) {
             currentParent.children.push(element);
         }
     }
+    // 文本内容
     function chars(text) {
         text = text.trim();
         if (text.length > 0) {
