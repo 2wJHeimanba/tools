@@ -9,81 +9,31 @@
         *{
             box-sizing: border-box;
         }
-        .vans-scroll-parent{
-            display: inline-flex;
-            position: relative;
-            border: 1px solid #ccc;
-            overflow-x: hidden;
-        }
         .container{
-            width: 120px;
-            height: 100px;
-            overflow-y:auto;
-            overflow-x: hidden;
-            margin-right: -15px;
-            scrollbar-width: thin;
-        }
-        .vans-hide-dom{
-            width: 8px;
-            background: #fff;
-            position: absolute;
-            top: 0;
-            right: 0;
-            height: 100%;
-            /* border: 1px solid blue; */
-            z-index: 100;
-        }
-        .vans-scroll-thumb{
-            width: 6px;
-            border-radius: 3px;
-            background: #ccc;
-            position: absolute;
-            top: 0;
-            left: 10%;
-            opacity: 0;
-            /* display: none; */
-            /* transform: translateX(-10%); */
-        }
-        .content{
-            width: 100px;
-            background: #ccc;
+            width: 150px;
+            height: 200px;
             
         }
     </style>
 </head>
 <body>
-    <div class="container vans-scroll">
-        <p>hello1</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>
-        <p>hello</p>       
+    <div id="app">
+        <div class="container">
+            <p v-for="(item,index) in 50" :key="index" @click="testHandler(item)">hello--{{item}}</p>
+        </div>
     </div>
-
+    
+    <script src="./dist/vue.min.js"></script>
     <script src="./dist/scrollbar.esm.js"></script>
     <script>
+        new Vue({
+            el:"#app",
+            methods: {
+                testHandler(e){
+                    console.log(e)
+                }
+            },
+        })
         scroll(".container")
     </script>
 </body>
