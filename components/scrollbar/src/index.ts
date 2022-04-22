@@ -1,6 +1,7 @@
 import { Window } from "../declare-ts"
+import { debounce } from "./tools/debounce";
 import { setScrollHidden } from "./tools/set_style"
-function Scroll(el:string|Element,className:string="vans-scroll-box123"):void{
+function Scroll(el:string|Element,className:string="vans-scroll-box"):void{
     if(typeof el === "string"){
         el = document.querySelector(el) as HTMLElement
     }else{
@@ -11,6 +12,8 @@ function Scroll(el:string|Element,className:string="vans-scroll-box123"):void{
     let hideDom:Element|HTMLElement;            //滚动条父元素
     let scrollToggle:boolean = true;            //滚动条的显示与隐藏
     let scrollThumbHeight:number;
+    let showHandler:()=>void;
+    let hideHandler:()=>void;
 
     let scrollBoxHeight = el.clientHeight;  //可见区域
     let contentBoxHeight = el.scrollHeight; //内容的全部高度
@@ -40,40 +43,8 @@ function Scroll(el:string|Element,className:string="vans-scroll-box123"):void{
         }
     });
 
-    el.addEventListener("mouseenter",function(){//进入显示滚动条
-        if(!scrollToggle){
-            return;
-        }
-        setTimeout(()=>{
-            scrollShowHandler();
-        },300)
-    });
-
-    el.addEventListener("mouseleave",function(){//离开隐藏滚动条
-        if(!scrollToggle){
-            return;
-        }
-        setTimeout(()=>{
-            scrollHideHandler();
-        },300); 
-    });
-
-    window.addEventListener("mousedown",function(e:any){
-        if(e.target === scrollDom){
-            scrollToggle = false;
-            window.addEventListener("mousemove",mouseMoveHandler)
-        }
-    });
-    window.addEventListener("mouseup",function(e:any){
-        scrollToggle = true;
-        if(!(el as HTMLElement).contains(e.target)){
-            scrollHideHandler();
-        }
-        window.removeEventListener("mousemove",mouseMoveHandler)
-    });
-
-    // 滚动条的显示
-    function scrollShowHandler(){
+    // 显示滚动条处理
+    showHandler = debounce(()=>{
         let temporaryOpacity:number = 0;
         let timein = setInterval(()=>{
             temporaryOpacity += 0.015;
@@ -83,10 +54,10 @@ function Scroll(el:string|Element,className:string="vans-scroll-box123"):void{
             }
             (scrollDom as HTMLElement).style.setProperty("opacity",`${temporaryOpacity.toFixed(2)}`);
         },4);
-    }
+    },300);
 
-    // 滚动条隐藏
-    function scrollHideHandler(){
+    // 隐藏滚动条处理
+    hideHandler = debounce(()=>{
         let temporaryOpacity:number = 1;
         let timeout = setInterval(()=>{
             temporaryOpacity -= 0.015;
@@ -96,7 +67,33 @@ function Scroll(el:string|Element,className:string="vans-scroll-box123"):void{
             }
             (scrollDom as HTMLElement).style.setProperty("opacity",`${temporaryOpacity.toFixed(2)}`);
         },4);
-    }
+    },300);
+
+    el.addEventListener("mouseenter",function(){//进入显示滚动条
+        if(!scrollToggle) return;
+        showHandler();
+    });
+
+    el.addEventListener("mouseleave",function(){//离开隐藏滚动条
+        if(!scrollToggle) return;
+        hideHandler();
+    });
+
+    // 鼠标按下
+    window.addEventListener("mousedown",function(e:any){
+        if(e.target === scrollDom){
+            scrollToggle = false;
+            window.addEventListener("mousemove",mouseMoveHandler)
+        }
+    });
+    // 鼠标松开
+    window.addEventListener("mouseup",function(e:any){
+        scrollToggle = true;
+        if(!(el as HTMLElement).contains(e.target) && parseFloat(window.getComputedStyle(scrollDom).opacity)===1){
+            hideHandler();
+        }
+        window.removeEventListener("mousemove",mouseMoveHandler)
+    });
 
     //鼠标移动处理
     function mouseMoveHandler(e:any){

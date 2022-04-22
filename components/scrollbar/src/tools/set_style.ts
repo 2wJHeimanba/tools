@@ -1,14 +1,14 @@
 
+import { scrollWidth } from "./scroll_width"
 
-
+// 设置样式
 export function setScrollHidden(el:Element,className:string){
     let linkElm = document.createElement("style");
     (el as HTMLElement).style.position = "relative";
     (el as HTMLElement).style.overflow = "hidden";
     linkElm.innerHTML = `
         .${className}{
-            margin-right:-17px;
-            height:100%;
+            margin-right:-${scrollWidth}px;
             overflow:hidden auto;
             max-height:${el.clientHeight}px;
             height:${el.clientHeight}px;
